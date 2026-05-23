@@ -68,10 +68,18 @@ export async function POST(req: Request) {
         } catch { /* non-fatal */ }
       }
 
-      // One-time payments: tips OR pay-per-pick unlock
+      // One-time payments: tips, pay-per-pick unlock, or pool entry
       if (s.mode === 'payment') {
         const kind = s.metadata?.kind ?? '';
-        if (kind === 'pick_unlock') {
+        if (kind === 'pool_entry') {
+          const poolId = s.metadata?.pool_id;
+          if (poolId) {
+            try {
+              const { markEntryPaid } = await import('@/lib/pools');
+              await markEntryPaid(poolId, email, s.id);
+            } catch { /* non-fatal */ }
+          }
+        } else if (kind === 'pick_unlock') {
           const lockId = s.metadata?.lock_id;
           if (lockId) {
             try {

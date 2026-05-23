@@ -29,6 +29,10 @@ export type AppBindings = {
   VAPID_PRIVATE_KEY?: string;
   VAPID_SUBJECT?: string;
   CRON_SECRET?: string;
+  STRIPE_POOL_PRICE_5?: string;
+  STRIPE_POOL_PRICE_25?: string;
+  STRIPE_POOL_PRICE_100?: string;
+  STRIPE_PRICE_ANNUAL?: string;
 };
 
 export function env(): AppBindings {

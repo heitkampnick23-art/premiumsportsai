@@ -22,6 +22,17 @@ const mem: Record<string, Row[]> = {
   contests: [],
   contest_entries: [],
   chat_usage: [],
+  pools: [],
+  pool_entries: [],
+  pool_picks: [],
+  payouts_pending: [],
+  pool_age_acks: [],
+  sponsored_takes: [],
+  email_queue: [],
+  email_events: [],
+  user_activity: [],
+  ab_events: [],
+  push_log: [],
 };
 
 let memSeeded = false;
