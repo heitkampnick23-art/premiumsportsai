@@ -1,0 +1,13 @@
+name = "premiumsportsai-cron"
+main = "workers/cron.ts"
+compatibility_date = "2025-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Every minute during games; Cloudflare's smallest interval is 1m on paid.
+# Hourly is the floor on free workers.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+APP_URL = "https://premiumsportsai.pages.dev"
+# Set the cron shared secret with: wrangler secret put CRON_SECRET --config wrangler.cron.toml
