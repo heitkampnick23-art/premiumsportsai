@@ -3,24 +3,19 @@ compatibility_date = "2025-05-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
 
-# D1 binding (run `wrangler d1 create premiumsportsai` to populate database_id)
 [[d1_databases]]
 binding = "DB"
 database_name = "premiumsportsai"
-database_id = "REPLACE_AFTER_D1_CREATE"
+database_id = "ae7df5bf-d66a-4c31-a93d-5f5bd26bbfd9"
 migrations_dir = "migrations"
 
-# KV cache (run `wrangler kv namespace create premiumsportsai-cache`)
 [[kv_namespaces]]
 binding = "CACHE"
-id = "REPLACE_AFTER_KV_CREATE"
+id = "e06e2263794e4393ad5203111d200e0f"
 
-# R2 avatars (run `wrangler r2 bucket create premiumsportsai-avatars`)
 [[r2_buckets]]
 binding = "AVATARS"
 bucket_name = "premiumsportsai-avatars"
 
-# Plain (non-secret) vars. Secrets (STRIPE/ANTHROPIC/etc.) set via:
-#   wrangler pages secret put STRIPE_SECRET_KEY --project-name=premiumsportsai
 [vars]
 APP_URL = "https://premiumsportsai.pages.dev"
