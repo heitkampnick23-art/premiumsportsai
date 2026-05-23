@@ -15,8 +15,24 @@ function sundayKey(d = new Date()): string {
 
 export async function getOrCreateThisWeekContest() {
   const week = sundayKey();
-  const existing = (await q<any>('SELECT * FROM contests WHERE week_start = ?', [week])).results[0];
-  if (existing) return existing;
+  try {
+    const existing = (await q<any>('SELECT * FROM contests WHERE week_start = ?', [week])).results[0];
+    if (existing) return existing;
+  } catch { /* fall through to create */ }
+  try {
+    return await createThisWeekContest(week);
+  } catch {
+    // Synthesise an ephemeral contest if D1 unavailable
+    const games = (await listGames()).slice(0, 5);
+    const slate: ContestSlate = games.map(g => ({
+      id: g.id, matchup: `${g.away.abbr} @ ${g.home.abbr}`,
+      ai_pick: ((g.spread ?? 0) < 0 ? 'home' : 'away') as 'home' | 'away',
+    }));
+    return { id: `fb-${week}`, week_start: week, slate: JSON.stringify(slate), winner_email: null, reward_granted: 0, created_at: Date.now() };
+  }
+}
+
+async function createThisWeekContest(week: string) {
   const games = (await listGames()).filter(g => g.status !== 'final').slice(0, 5);
   let aiPicks: Record<string, 'home' | 'away'> = {};
   const key = env().ANTHROPIC_API_KEY;

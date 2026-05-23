@@ -78,10 +78,12 @@ export async function generateTodaysLocks(): Promise<DailyLock[]> {
       sharp_notes: null,
       created_at: Date.now(),
     };
-    await exec(
-      'INSERT INTO daily_locks (id, date, slot, tier_required, game_id, matchup, pick, market, confidence, reasoning, sharp_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [row.id, row.date, row.slot, row.tier_required, row.game_id, row.matchup, row.pick, row.market, row.confidence, row.reasoning, row.sharp_notes, row.created_at],
-    );
+    try {
+      await exec(
+        'INSERT INTO daily_locks (id, date, slot, tier_required, game_id, matchup, pick, market, confidence, reasoning, sharp_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [row.id, row.date, row.slot, row.tier_required, row.game_id, row.matchup, row.pick, row.market, row.confidence, row.reasoning, row.sharp_notes, row.created_at],
+      );
+    } catch { /* non-fatal */ }
     out.push(row);
   }
   const s = payload.sharp ?? fallbackPayload(upcoming).sharp;
@@ -99,10 +101,12 @@ export async function generateTodaysLocks(): Promise<DailyLock[]> {
     sharp_notes: String(s.sharp_notes ?? 'Deeper market analysis: line moved off open without corresponding action; market makers signaling sharp side.'),
     created_at: Date.now(),
   };
-  await exec(
-    'INSERT INTO daily_locks (id, date, slot, tier_required, game_id, matchup, pick, market, confidence, reasoning, sharp_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [sharpRow.id, sharpRow.date, sharpRow.slot, sharpRow.tier_required, sharpRow.game_id, sharpRow.matchup, sharpRow.pick, sharpRow.market, sharpRow.confidence, sharpRow.reasoning, sharpRow.sharp_notes, sharpRow.created_at],
-  );
+  try {
+    await exec(
+      'INSERT INTO daily_locks (id, date, slot, tier_required, game_id, matchup, pick, market, confidence, reasoning, sharp_notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [sharpRow.id, sharpRow.date, sharpRow.slot, sharpRow.tier_required, sharpRow.game_id, sharpRow.matchup, sharpRow.pick, sharpRow.market, sharpRow.confidence, sharpRow.reasoning, sharpRow.sharp_notes, sharpRow.created_at],
+    );
+  } catch { /* non-fatal */ }
   out.push(sharpRow);
   return out;
 }
@@ -130,7 +134,36 @@ function fallbackPayload(games: any[]) {
 
 export async function getTodaysLocks(): Promise<DailyLock[]> {
   const date = todayKey();
-  const r = await q<DailyLock>('SELECT * FROM daily_locks WHERE date = ? ORDER BY slot ASC', [date]);
-  if (r.results.length >= 5) return r.results;
-  return generateTodaysLocks();
+  try {
+    const r = await q<DailyLock>('SELECT * FROM daily_locks WHERE date = ? ORDER BY slot ASC', [date]);
+    if (r.results.length >= 5) return r.results;
+    return await generateTodaysLocks();
+  } catch {
+    // Ultimate fallback: synthesise five locks from fixtures so the page never 500s
+    const games = await listGames();
+    const payload = fallbackPayload(games);
+    const synth: DailyLock[] = [];
+    for (let i = 0; i < 4; i++) {
+      const p = payload.picks[i];
+      synth.push({
+        id: `fb-${date}-${i + 1}`,
+        date, slot: i + 1,
+        tier_required: i === 0 ? 'free' : 'pro',
+        game_id: games[i]?.id ?? null,
+        matchup: p.matchup, pick: p.pick, market: p.market as any,
+        confidence: p.confidence, reasoning: p.reasoning, sharp_notes: null,
+        created_at: Date.now(),
+      });
+    }
+    const s = payload.sharp;
+    synth.push({
+      id: `fb-${date}-5`,
+      date, slot: 5, tier_required: 'sharp',
+      game_id: games[4]?.id ?? games[0]?.id ?? null,
+      matchup: s.matchup, pick: s.pick, market: s.market as any,
+      confidence: s.confidence, reasoning: s.reasoning, sharp_notes: s.sharp_notes,
+      created_at: Date.now(),
+    });
+    return synth;
+  }
 }
