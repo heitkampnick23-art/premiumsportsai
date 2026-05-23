@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="max-w-6xl mx-auto px-4 py-6 text-xs text-zinc-400 space-y-2">
             <p>PremiumSportsAi is an insights and information service. We are NOT a sportsbook and do not accept wagers.</p>
             <p><strong>Gambling problem?</strong> Call 1-800-GAMBLER. Must be 21+ in most jurisdictions. Bet responsibly.</p>
-            <p>© {new Date().getFullYear()} PremiumSportsAi · <Link href="/legal" className="underline">Terms & Privacy</Link></p>
+            <p>© {new Date().getFullYear()} PremiumSportsAi · <Link href="/terms" className="underline">Terms</Link> · <Link href="/privacy" className="underline">Privacy</Link> · <Link href="/responsible-gambling" className="underline">Responsible Gambling</Link></p>
           </div>
         </footer>
       </body>

@@ -1,16 +1,26 @@
+import Link from 'next/link';
 export const runtime = 'edge';
+export const metadata = { title: 'Legal — PremiumSportsAi' };
+
 export default function Legal() {
+  const items = [
+    { href: '/terms', title: 'Terms of Service', desc: 'Subscription rules, pool entry terms, no-guarantees policy, arbitration.' },
+    { href: '/privacy', title: 'Privacy Policy', desc: 'What we collect, who we share it with, your access and deletion rights (GDPR/CCPA).' },
+    { href: '/responsible-gambling', title: 'Responsible Gambling', desc: 'Warning signs, 1-800-GAMBLER, self-exclusion, the limits we enforce.' },
+  ];
   return (
     <article className="prose prose-invert max-w-3xl space-y-4">
-      <h1 className="text-3xl font-black">Terms & Privacy</h1>
-      <h2 className="font-bold">Service description</h2>
-      <p>PremiumSportsAi provides AI-generated analytical insights for NFL games. We are NOT a sportsbook, do not accept wagers, and do not facilitate gambling transactions. Affiliate links may direct you to third-party licensed operators.</p>
-      <h2 className="font-bold">Responsible gambling</h2>
-      <p>Sports betting involves financial risk. Must be 21+ in most US jurisdictions. If you or someone you know has a gambling problem, call 1-800-GAMBLER or visit ncpgambling.org.</p>
-      <h2 className="font-bold">Data we collect</h2>
-      <p>Email (for sign-in and agent delivery), takes you post, subscription/tip records. We do not sell your data. Stripe handles all payment details.</p>
-      <h2 className="font-bold">Contact</h2>
-      <p>support@premiumsportsai.com</p>
+      <h1 className="text-3xl font-black">Legal</h1>
+      <p>PremiumSportsAi is an information and entertainment service. We are <strong>not</strong> a sportsbook and do not accept wagers. Affiliate links direct to third-party licensed operators.</p>
+      <div className="grid gap-3 not-prose">
+        {items.map(i => (
+          <Link key={i.href} href={i.href} className="block rounded-xl border border-edge p-4 hover:border-orange-500 transition">
+            <div className="font-bold text-lg">{i.title}</div>
+            <div className="text-sm text-zinc-400 mt-1">{i.desc}</div>
+          </Link>
+        ))}
+      </div>
+      <p className="text-sm text-zinc-400">Contact: <a href="mailto:heitkampnick23@gmail.com" className="underline">heitkampnick23@gmail.com</a></p>
     </article>
   );
 }
