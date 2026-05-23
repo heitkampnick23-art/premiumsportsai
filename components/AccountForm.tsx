@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
 
-export function AccountForm({ email, stripeReady, isPremium }: { email: string | null; stripeReady: boolean; isPremium: boolean }) {
+type Tier = 'free' | 'pro' | 'sharp';
+
+export function AccountForm({ email, stripeReady, isPremium, tier, renews }: { email: string | null; stripeReady: boolean; isPremium: boolean; tier?: Tier; renews?: string | null }) {
   const [input, setInput] = useState(email ?? '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -20,9 +22,13 @@ export function AccountForm({ email, stripeReady, isPremium }: { email: string |
     else setErr('Could not sign in.');
   }
 
-  async function subscribe() {
+  async function subscribe(plan: 'pro' | 'sharp') {
     setBusy(true); setErr(null);
-    const r = await fetch('/api/stripe/checkout', { method: 'POST' });
+    const r = await fetch('/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ plan }),
+    });
     const data = await r.json();
     setBusy(false);
     if (data.url) location.href = data.url;
@@ -64,7 +70,9 @@ export function AccountForm({ email, stripeReady, isPremium }: { email: string |
         <div className="card flex items-center justify-between">
           <div>
             <p className="font-bold">{email}</p>
-            <p className="text-xs text-zinc-400">{isPremium ? 'Premium · active' : 'Free plan'}</p>
+            <p className="text-xs text-zinc-400">
+              {isPremium ? `${tier === 'sharp' ? 'Sharp' : 'Pro'} · active${renews ? ` · renews ${renews}` : ''}` : 'Free plan'}
+            </p>
           </div>
           <button onClick={signOut} className="btn-ghost text-sm">Sign out</button>
         </div>
@@ -72,17 +80,16 @@ export function AccountForm({ email, stripeReady, isPremium }: { email: string |
 
       {email && !isPremium && (
         <div className="card">
-          <h2 className="font-bold">Premium — $14.99 / month</h2>
-          <ul className="text-sm text-zinc-300 mt-2 space-y-1">
-            <li>· Unlimited Game Pulse + Bet Lab refreshes</li>
-            <li>· Agent emails on every favorite-team gameday</li>
-            <li>· Edge alerts when model EV crosses 3%</li>
-            <li>· No ads</li>
-          </ul>
-          <button onClick={subscribe} disabled={busy || !stripeReady} className="btn-primary mt-3 disabled:opacity-50">
-            {stripeReady ? 'Subscribe (Stripe LIVE)' : 'Stripe key not configured'}
-          </button>
-          {!stripeReady && <p className="text-xs text-zinc-500 mt-2">Set STRIPE_SECRET_KEY (sk_live_…) and STRIPE_PRICE_PREMIUM in Cloudflare Pages env vars. See SETUP.md.</p>}
+          <h2 className="font-bold">Upgrade</h2>
+          <div className="grid sm:grid-cols-2 gap-3 mt-3">
+            <button onClick={() => subscribe('pro')} disabled={busy || !stripeReady} className="btn-primary disabled:opacity-50">
+              Pro · $14.99/mo
+            </button>
+            <button onClick={() => subscribe('sharp')} disabled={busy || !stripeReady} className="btn-ghost border-amber-500/40 hover:border-amber-400 disabled:opacity-50">
+              Sharp · $29.99/mo
+            </button>
+          </div>
+          {!stripeReady && <p className="text-xs text-zinc-500 mt-2">Set STRIPE_SECRET_KEY (sk_live_…) + STRIPE_PRICE_PRO / STRIPE_PRICE_SHARP. See SETUP.md.</p>}
         </div>
       )}
 

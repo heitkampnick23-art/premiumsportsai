@@ -12,11 +12,23 @@ export type AppBindings = {
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   STRIPE_PRICE_PREMIUM?: string;
+  STRIPE_PRICE_PRO?: string;
+  STRIPE_PRICE_SHARP?: string;
+  STRIPE_PRICE_PICK_UNLOCK?: string;
   ODDS_API_KEY?: string;
   SPORTSDATAIO_KEY?: string;
   RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
   APP_URL?: string;
   SESSION_SECRET?: string;
+  AFFILIATE_DK_URL?: string;
+  AFFILIATE_FD_URL?: string;
+  AFFILIATE_BETMGM_URL?: string;
+  AFFILIATE_CAESARS_URL?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
+  CRON_SECRET?: string;
 };
 
 export function env(): AppBindings {

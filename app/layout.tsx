@@ -8,11 +8,16 @@ export const metadata: Metadata = {
 };
 
 const nav = [
+  { href: '/locks', label: 'Locks' },
   { href: '/games', label: 'Game Pulse' },
   { href: '/bets', label: 'Bet Lab' },
-  { href: '/agent', label: 'Fan Agent' },
+  { href: '/dfs', label: 'DFS' },
+  { href: '/contest', label: 'Contest' },
+  { href: '/chat', label: 'Chat' },
   { href: '/takes', label: 'Hot Takes' },
-  { href: '/news', label: 'News' },
+  { href: '/leaderboard', label: 'Leaders' },
+  { href: '/agent', label: 'Agent' },
+  { href: '/pricing', label: 'Pricing' },
   { href: '/account', label: 'Account' },
 ];
 
@@ -31,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               ))}
             </nav>
             <div className="ml-auto">
-              <Link href="/account" className="btn-primary text-sm">Go Premium</Link>
+              <Link href="/pricing" className="btn-primary text-sm">Pricing</Link>
             </div>
           </div>
         </header>
