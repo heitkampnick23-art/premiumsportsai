@@ -3,15 +3,15 @@ import { readEmail } from '@/lib/auth';
 import { getTier } from '@/lib/tier';
 import { has } from '@/lib/env';
 import { CheckoutButton } from '@/components/CheckoutButton';
+import { getOrAssignBucket, logAbEvent } from '@/lib/ab';
 
 export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
-const tiers = [
+const tiersA = [
   {
     key: 'free' as const,
-    name: 'Free',
-    price: '$0',
-    cadence: 'forever',
+    name: 'Free', price: '$0', cadence: 'forever',
     features: [
       '1 free Lock of the Day',
       'Limited Game Pulse previews',
@@ -25,9 +25,7 @@ const tiers = [
   },
   {
     key: 'pro' as const,
-    name: 'Pro',
-    price: '$14.99',
-    cadence: '/month',
+    name: 'Pro', price: '$14.99', cadence: '/month',
     highlighted: true,
     features: [
       'All 4 Locks of the Day unlocked',
@@ -38,13 +36,11 @@ const tiers = [
       'No ads',
     ],
     cta: 'Start Pro',
-    priceKey: 'pro',
+    priceKey: 'pro' as const,
   },
   {
     key: 'sharp' as const,
-    name: 'Sharp',
-    price: '$29.99',
-    cadence: '/month',
+    name: 'Sharp', price: '$29.99', cadence: '/month',
     features: [
       'Everything in Pro, plus:',
       'Daily Sharp Lock w/ market-signal analysis',
@@ -54,25 +50,49 @@ const tiers = [
       'Sharp-only Discord (coming soon)',
     ],
     cta: 'Go Sharp',
-    priceKey: 'sharp',
+    priceKey: 'sharp' as const,
   },
+];
+
+// Variant B: Sharp-first ordering + annual $149/yr add-on
+const tiersB = [
+  tiersA[2], // sharp first
+  { ...tiersA[1], highlighted: false },
+  {
+    key: 'annual' as const,
+    name: 'Pro Annual', price: '$149', cadence: '/year',
+    highlighted: true,
+    features: [
+      'Everything in Pro',
+      '$30 off vs monthly',
+      'Locked-in for the season',
+      'Auto-renews — cancel anytime',
+    ],
+    cta: 'Save $30 — Go Annual',
+    priceKey: 'annual' as const,
+  },
+  tiersA[0], // free last
 ];
 
 export default async function PricingPage() {
   const email = await readEmail();
   const current = await getTier(email);
   const stripeReady = has('STRIPE_SECRET_KEY');
+  const { variant } = getOrAssignBucket();
+  try { await logAbEvent('view', email ?? undefined); } catch {}
+
+  const tiers = variant === 'B' ? tiersB : tiersA;
 
   return (
     <div className="space-y-8">
       <header className="text-center">
-        <h1 className="text-4xl font-black">Pick your edge</h1>
+        <h1 className="text-4xl font-black">{variant === 'B' ? 'Sharpen your edge' : 'Pick your edge'}</h1>
         <p className="text-zinc-400 mt-2">Stripe live, cancel anytime. Pro and Sharp pay for themselves with one good Sunday.</p>
         {!email && <p className="mt-3 text-sm"><Link href="/account" className="underline">Sign in</Link> first to subscribe.</p>}
       </header>
 
       <div className="grid md:grid-cols-3 gap-4">
-        {tiers.map(t => {
+        {tiers.map((t: any) => {
           const isCurrent = current === t.key;
           const canStart = email && stripeReady && t.priceKey && !isCurrent;
           return (
@@ -84,11 +104,11 @@ export default async function PricingPage() {
               </div>
               <p className="mt-2"><span className="text-3xl font-black">{t.price}</span><span className="text-zinc-400">{t.cadence}</span></p>
               <ul className="mt-4 space-y-2 text-sm flex-1">
-                {t.features.map(f => <li key={f} className="text-zinc-300">· {f}</li>)}
+                {t.features.map((f: string) => <li key={f} className="text-zinc-300">· {f}</li>)}
               </ul>
               <div className="mt-4">
                 {t.priceKey && canStart ? (
-                  <CheckoutButton plan={t.priceKey as 'pro' | 'sharp'} label={t.cta} />
+                  <CheckoutButton plan={t.priceKey} label={t.cta} />
                 ) : t.priceKey && !email ? (
                   <Link href="/account" className="btn-primary block text-center">Sign in to start</Link>
                 ) : (
@@ -101,7 +121,7 @@ export default async function PricingPage() {
       </div>
 
       <section className="card text-xs text-zinc-500 space-y-1">
-        <p>All plans renew monthly. Cancel any time from Account → Billing.</p>
+        <p>All plans renew {variant === 'B' ? 'on schedule' : 'monthly'}. Cancel any time from Account → Billing.</p>
         <p>Informational service only — not a sportsbook. 21+, must be in a permitted jurisdiction. Bet responsibly. 1-800-GAMBLER.</p>
       </section>
     </div>

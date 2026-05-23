@@ -15,6 +15,8 @@ const nav = [
   { href: '/contest', label: 'Contest' },
   { href: '/chat', label: 'Chat' },
   { href: '/takes', label: 'Hot Takes' },
+  { href: '/teams', label: 'Teams' },
+  { href: '/pools', label: 'Pools' },
   { href: '/leaderboard', label: 'Leaders' },
   { href: '/agent', label: 'Agent' },
   { href: '/pricing', label: 'Pricing' },

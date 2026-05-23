@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 
-export function CheckoutButton({ plan, label }: { plan: 'pro' | 'sharp'; label: string }) {
+export function CheckoutButton({ plan, label }: { plan: 'pro' | 'sharp' | 'annual'; label: string }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function go() {

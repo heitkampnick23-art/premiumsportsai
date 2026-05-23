@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { env } from '@/lib/env';
 import { exec, q } from '@/lib/db';
+import { logAbEvent } from '@/lib/ab';
+import { evaluateBadges } from '@/lib/badges';
+import { recordActivity } from '@/lib/drip';
 
 export const runtime = 'edge';
 
@@ -66,6 +69,9 @@ export async function POST(req: Request) {
             await exec('UPDATE subscriptions SET current_period_end = ? WHERE user_email = ?', [periodEnd + extend, email]);
           }
         } catch { /* non-fatal */ }
+        try { await logAbEvent('checkout_complete', email, { plan }); } catch {}
+        try { await evaluateBadges(email); } catch {}
+        try { await recordActivity(email); } catch {}
       }
 
       // One-time payments: tips, pay-per-pick unlock, or pool entry

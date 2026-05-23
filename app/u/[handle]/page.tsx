@@ -49,7 +49,10 @@ export default async function ProfilePage({ params }: { params: { handle: string
         </section>
       )}
 
-      <Link href="/leaderboard" className="btn-ghost inline-block">View leaderboard →</Link>
+      <div className="flex flex-wrap gap-2">
+        <Link href={`/collection/${p.handle}`} className="btn-primary inline-block">View badge collection →</Link>
+        <Link href="/leaderboard" className="btn-ghost inline-block">View leaderboard →</Link>
+      </div>
     </div>
   );
 }

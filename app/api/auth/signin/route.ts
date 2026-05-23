@@ -4,6 +4,8 @@ import { setSessionCookie } from '@/lib/auth';
 import { exec, q } from '@/lib/db';
 import { attachReferral, referrerEmailForCode } from '@/lib/referral';
 import { recordDailyLogin } from '@/lib/streaks';
+import { enqueueWelcomeDrip, recordActivity } from '@/lib/drip';
+import { evaluateBadges } from '@/lib/badges';
 
 export const runtime = 'edge';
 
@@ -28,5 +30,8 @@ export async function POST(req: Request) {
     }
   }
   try { await recordDailyLogin(email); } catch { /* non-fatal */ }
+  try { await recordActivity(email); } catch {}
+  if (isNew) { try { await enqueueWelcomeDrip(email); } catch {} }
+  try { await evaluateBadges(email); } catch {}
   return NextResponse.json({ ok: true });
 }

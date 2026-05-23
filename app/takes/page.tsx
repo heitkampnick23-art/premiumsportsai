@@ -1,11 +1,13 @@
 import { q } from '@/lib/db';
 import { TakeForm } from '@/components/TakeForm';
+import { getActiveSponsoredTake } from '@/lib/sponsor';
 
 export const runtime = 'edge';
 
 export default async function TakesPage() {
   const recentR = await q<any>('SELECT * FROM takes ORDER BY created_at DESC LIMIT 30');
   const recent = recentR.results;
+  const sponsored = await getActiveSponsoredTake();
   // Leaderboard: aggregate clout per user (in-memory or D1)
   const board: Record<string, number> = {};
   recent.forEach(t => { board[t.user_email] = (board[t.user_email] ?? 0) + (t.clout ?? 0); });
@@ -22,6 +24,16 @@ export default async function TakesPage() {
           <h2 className="font-bold mb-3">Drop a take</h2>
           <TakeForm />
         </section>
+        {sponsored && (
+          <section className="card border-accent2/60 bg-gradient-to-br from-accent2/10 to-transparent">
+            <div className="flex items-center justify-between text-xs">
+              <span className="badge bg-accent2/20 text-accent2 uppercase tracking-widest">Sponsored Take of the Day</span>
+              <span className="text-zinc-500">by <a className="underline" href={`/sp/${sponsored.id}`} rel="sponsored noopener">{sponsored.sponsor_name}</a></span>
+            </div>
+            <p className="mt-2 text-lg">{sponsored.text}</p>
+            <a href={`/sp/${sponsored.id}`} rel="sponsored noopener" className="btn-primary inline-block mt-3 text-sm">Visit {sponsored.sponsor_name} →</a>
+          </section>
+        )}
         <section>
           <h2 className="font-bold mb-3">Recent takes</h2>
           <ul className="space-y-3">

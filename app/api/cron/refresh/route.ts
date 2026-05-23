@@ -6,6 +6,7 @@ import { q, exec } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { getOrCreateThisWeekContest } from '@/lib/contest';
 import { sendPush } from '@/lib/push';
+import { drainEmailQueue, enqueueReactivationCandidates } from '@/lib/drip';
 
 export const runtime = 'edge';
 
@@ -118,6 +119,10 @@ async function run(req: Request) {
       if (e2.CACHE) await e2.CACHE.put(kvKey, '1', { expirationTtl: 60 * 60 * 12 });
     }
   } catch (e: any) { out.pushErr = e.message; }
+
+  // Email drip: enqueue reactivations, then drain due jobs
+  try { out.reactEnq = await enqueueReactivationCandidates(); } catch (e: any) { out.reactErr = e.message; }
+  try { out.dripDrain = await drainEmailQueue(); } catch (e: any) { out.dripErr = e.message; }
 
   return NextResponse.json(out);
 }

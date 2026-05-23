@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { readEmail } from '@/lib/auth';
 import { env } from '@/lib/env';
+import { logAbEvent } from '@/lib/ab';
 
 export const runtime = 'edge';
 
@@ -9,19 +10,22 @@ export async function POST(req: Request) {
   const email = await readEmail();
   if (!email) return NextResponse.json({ error: 'sign in first' }, { status: 401 });
   const body = await req.json().catch(() => ({}));
-  const plan = (body.plan ?? 'pro') as 'pro' | 'sharp';
+  const plan = (body.plan ?? 'pro') as 'pro' | 'sharp' | 'annual';
   const e = env();
   const priceId =
     plan === 'sharp' ? e.STRIPE_PRICE_SHARP :
+    plan === 'annual' ? e.STRIPE_PRICE_ANNUAL :
     (e.STRIPE_PRICE_PRO ?? e.STRIPE_PRICE_PREMIUM);
   if (!priceId) {
     return NextResponse.json({
-      error: plan === 'sharp'
-        ? 'STRIPE_PRICE_SHARP not set in Cloudflare Pages env vars.'
-        : 'STRIPE_PRICE_PRO (or STRIPE_PRICE_PREMIUM) not set in Cloudflare Pages env vars.',
+      error:
+        plan === 'sharp' ? 'STRIPE_PRICE_SHARP not set in Cloudflare Pages env vars.' :
+        plan === 'annual' ? 'STRIPE_PRICE_ANNUAL not set in Cloudflare Pages env vars.' :
+        'STRIPE_PRICE_PRO (or STRIPE_PRICE_PREMIUM) not set in Cloudflare Pages env vars.',
     }, { status: 500 });
   }
   const appUrl = e.APP_URL ?? 'https://premiumsportsai.pages.dev';
+  try { await logAbEvent('checkout_start', email, { plan }); } catch {}
   try {
     const session = await stripe().checkout.sessions.create({
       mode: 'subscription',
