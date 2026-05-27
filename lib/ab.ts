@@ -1,31 +1,43 @@
 // Cookie-bucket A/B test harness for pricing experiment.
+// NOTE: Next.js 15 forbids cookies().set() in RSC render.
+// getOrAssignBucket() is READ-ONLY on the server; new buckets are persisted
+// client-side by <AbBucketInit> in components/AbBucketInit.tsx.
 import { cookies } from 'next/headers';
 import { exec, q } from './db';
 
-const COOKIE = 'psa_ab';
+export const COOKIE = 'psa_ab';
 export type Variant = 'A' | 'B';
 
-export function getOrAssignBucket(): { bucketId: string; variant: Variant } {
-  const jar = cookies();
-  const ex = jar.get(COOKIE)?.value;
-  if (ex) {
-    const [bucketId, variant] = ex.split('.');
-    if (bucketId && (variant === 'A' || variant === 'B')) return { bucketId, variant };
-  }
+export function getOrAssignBucket(): { bucketId: string; variant: Variant; isNew: boolean } {
+  try {
+    // In Next.js 15, cookies() may be async; cast to any to safely call .get()
+    // without triggering a type error on the Promise branch.
+    const jar = cookies() as any;
+    const ex: string | undefined =
+      typeof jar.get === 'function' ? jar.get(COOKIE)?.value : undefined;
+    if (ex) {
+      const [bucketId, variant] = ex.split('.');
+      if (bucketId && (variant === 'A' || variant === 'B'))
+        return { bucketId, variant: variant as Variant, isNew: false };
+    }
+  } catch {}
+  // New visitor — generate bucket but do NOT write cookie here (RSC read-only).
+  // <AbBucketInit> will persist it via document.cookie on the client.
   const bucketId = crypto.randomUUID();
   const variant: Variant = Math.random() < 0.5 ? 'A' : 'B';
-  jar.set(COOKIE, `${bucketId}.${variant}`, {
-    httpOnly: false, sameSite: 'lax', secure: true, path: '/', maxAge: 60 * 60 * 24 * 90,
-  });
-  return { bucketId, variant };
+  return { bucketId, variant, isNew: true };
 }
 
 export function readBucket(): { bucketId: string; variant: Variant } | null {
-  const ex = cookies().get(COOKIE)?.value;
-  if (!ex) return null;
-  const [bucketId, variant] = ex.split('.');
-  if (!bucketId || (variant !== 'A' && variant !== 'B')) return null;
-  return { bucketId, variant: variant as Variant };
+  try {
+    const jar = cookies() as any;
+    const ex: string | undefined =
+      typeof jar.get === 'function' ? jar.get(COOKIE)?.value : undefined;
+    if (!ex) return null;
+    const [bucketId, variant] = ex.split('.');
+    if (!bucketId || (variant !== 'A' && variant !== 'B')) return null;
+    return { bucketId, variant: variant as Variant };
+  } catch { return null; }
 }
 
 export async function logAbEvent(event: 'view' | 'checkout_start' | 'checkout_complete', email?: string, meta?: any) {

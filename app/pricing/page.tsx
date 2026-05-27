@@ -3,6 +3,7 @@ import { readEmail } from '@/lib/auth';
 import { getTier } from '@/lib/tier';
 import { has } from '@/lib/env';
 import { CheckoutButton } from '@/components/CheckoutButton';
+import { AbBucketInit } from '@/components/AbBucketInit';
 import { getOrAssignBucket, logAbEvent } from '@/lib/ab';
 
 export const runtime = 'edge';
@@ -78,13 +79,14 @@ export default async function PricingPage() {
   const email = await readEmail();
   const current = await getTier(email);
   const stripeReady = has('STRIPE_SECRET_KEY');
-  const { variant } = getOrAssignBucket();
+  const { bucketId, variant, isNew } = getOrAssignBucket();
   try { await logAbEvent('view', email ?? undefined); } catch {}
 
   const tiers = variant === 'B' ? tiersB : tiersA;
 
   return (
     <div className="space-y-8">
+      {isNew && <AbBucketInit bucketId={bucketId} variant={variant} />}
       <header className="text-center">
         <h1 className="text-4xl font-black">{variant === 'B' ? 'Sharpen your edge' : 'Pick your edge'}</h1>
         <p className="text-zinc-400 mt-2">Stripe live, cancel anytime. Pro and Sharp pay for themselves with one good Sunday.</p>
