@@ -95,3 +95,4 @@ Add `premiumsportsai.com` in Cloudflare Pages → Custom domains. DNS already on
 - All API routes use `runtime = 'edge'` so they execute on Cloudflare Pages Functions.
 - Anthropic models: `claude-opus-4-7` for locks/Game Pulse/Bet Lab/DFS, `claude-haiku-4-5-20251001` for take grading + chat + news + contest AI picks. Prompt caching is on via `cache_control: { type: 'ephemeral' }` on stable system prompts.
 - Web push payloads are sent as "tickles" (no encrypted payload). The service worker shows a default notification — sufficient for the alert UX. Full aes128gcm encryption can be layered in later.
+# Pool entry Stripe prices wired: //
